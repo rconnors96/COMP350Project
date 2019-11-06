@@ -67,14 +67,21 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	}//end of check
 
 	if (ax == 0){// print String
+			// AX = 0
+			// BX = ADDRESS OF THE STRING
 		printString(bx);
 	}// end of print string
 
 	if (ax == 1){// read string
+			//AX = 1
+			//BX = ADDRESS OF THE CHARACTER ARRAY WHERE KEYS GO
 		readString(bx);
 	}// end of read string
 
 	if(ax == 2){// read sector
+			//AX = 2
+			//BX = ADDRESS OF THE CHARACTER ARRAY WHERE THE SECTOR WILL GO
+			//CX = THE SECTOR NUMBER
 		readSector(bx, cx);
 	}// end of sector
 
