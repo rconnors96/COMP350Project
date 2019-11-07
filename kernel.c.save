@@ -1,21 +1,23 @@
 	void printChar(char); 		//printChar function declaration
 	void printString(char*); 	//printString function declaration
 	void readString(char*); 	//readString function declaration
-	void readSector(char*); 		// read sector
+	void readSector(char); 		// read sector
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
-	void readFile(char*,char*,int);
+	void readFile(char*);
 
 void main() {
 
-	char buffer[13312];   /*this is the maximum size of a file*/
-	int sectorsRead;
-	makeInterrupt21(); 
-	interrupt(0x21, 3, "messag", buffer, &sectorsRead);   /*read the file into buffer*/ 
-	if (sectorsRead>0)
-		interrupt(0x21, 0, buffer, 0, 0);   /*print out the file*/ 
-	else
-		interrupt(0x21, 0, "messag not found\r\n", 0, 0);  /*no sectors read? then print an error*/
-	while(1);   /*hang up*/ 
+	printString("Enter a line: ");
+
+	while(1){//main
+
+	char line[80];
+	makeInterrupt21();
+	interrupt(0x21,1,"Enter a line: ",0,0);
+	interrupt(0x21,0,"Enter a line: ",0,0);
+	}	// end of main
+
+	while(1);	//fail safe
 }
 
 void printChar(char c) {
@@ -61,7 +63,7 @@ void readString(char* chars) {
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 3){//error check
+	if(ax > 2){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
@@ -75,15 +77,12 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
 	if(ax == 2){// read sector
 		readSector(bx, cx);
-	}
-	if(ax == 3){
-		readFile(bx,cx,dx);
 	}// end of sector
 
 
 }//end of handle 21
 
-void readSector(char* buffer ,int sector){// start of readSector
+void readSector(char*buffer ,int sector){// start of readSector
 
 	// parameter set up
 	int AH = 2;
@@ -104,21 +103,22 @@ void readSector(char* buffer ,int sector){// start of readSector
 
 } // end of readSector
 
-void readFile(char* fileName, char* buffer, int sectorsRead) {
-	char dir[512];
-	readSector(dir,512);
+void readFile(char* fileName) {
+	int AX = 3;
+	int BX = fileName;
 
-	int numberOfLoops = 1; //for testing the for loop
+	char* file[32]; //holds the current file
+	int CX = file; //buffer to hold the file
+	int DX = 0; //number of sectors read
 
-	for(int fileEntry; fileEntry < 512 ; fileEntry+=32) {
-		sectorsRead++;
+	char* dir[512];
+	readSector(dir, 512);
+
+	for(int fileEntry = 0; fileEntry<512; fileEntry+=32) {
+		DX++;
 		if(fileName[0]==dir[fileEntry+0] && fileName[1]==dir[fileEntry+1] && fileName[2]==dir[fileEntry+2] && fileName[3]==dir[fileEntry+3] && fileName[4]==dir[fileEntry+4] && fileName[5]==dir[fileEntry+5]) {
-			for(int i = 6; i < 32; i++) {
-				readSector(buffer, dir[fileEntry+i]);
-				buffer += 512;
-			}
+			for
 		}
-		numberOfLoops++; //testing the for loop
-		printChar(numberOfLoops); //testing the for loop
+
 	}
-}
+} //end of readFile
