@@ -1,22 +1,50 @@
+	
 	void printChar(char); 		//printChar function declaration
 	void printString(char*); 	//printString function declaration
 	void readString(char*); 	//readString function declaration
 	void readSector(char); 		// read sector
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
+	void readFile(char*,char*,int*);
 
 void main() {
-
-	printString("Enter a line: ");
 
 	while(1){//main
 
 	char line[80];
+	char buffer[13312];
+	int sectorsRead;
 	makeInterrupt21();
-	interrupt(0x21,1,"Enter a line: ",0,0);
-	interrupt(0x21,0,"Enter a line: ",0,0);
+	printString(line);
+	interrupt(0x21,1,'h',0,0);
+printChar('H');
+	interrupt(0x21,3,"messag",buffer,&sectorsRead);
+	printChar('H');
+	if(sectorsRead > 0)
+		interrupt(0x21,0,buffer,0,0);
+	else
+		interrupt(0x21,0,"messag not found\r\n",0,0);
+
 	}	// end of main
 
 	while(1);	//fail safe
+}
+
+void readFile(char* name, char* buffer, int* sectorsRead){
+	int i = 0;
+	int j = 6;
+	char dir[512];
+	interrupt(0x21,2,dir,2,0);
+	for(i = 0; i <512; i+=32){
+		printChar('a');
+		if(name[0] == dir[i+0]&&name[1] == dir[i+1] &&name[2] == dir[i+2] &&name[3] == dir[i+3] &&name[4] == dir[i+4] &&name[5] == dir[i+5]){
+			sectorsRead += 1;
+			for(j = 6; dir[j]!=0; j++){
+				interrupt(0x21,2,buffer,dir[j],0);
+				*buffer = *buffer + 512;
+			}
+		}
+		else sectorsRead= 0;
+	}
 }
 
 void printChar(char c) {
@@ -60,33 +88,31 @@ void readString(char* chars) {
 	}
 }
 
+
+
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 2){//error check
+	if(ax > 3){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
 	if (ax == 0){// print String
-			// AX = 0
-			// BX = ADDRESS OF THE STRING
 		printString(bx);
 	}// end of print string
 
 	if (ax == 1){// read string
-			//AX = 1
-			//BX = ADDRESS OF THE CHARACTER ARRAY WHERE KEYS GO
 		readString(bx);
 	}// end of read string
 
 	if(ax == 2){// read sector
-			//AX = 2
-			//BX = ADDRESS OF THE CHARACTER ARRAY WHERE THE SECTOR WILL GO
-			//CX = THE SECTOR NUMBER
 		readSector(bx, cx);
 	}// end of sector
-
+	if(ax == 3){
+		readFile(bx,cx,dx);
+	}
 
 }//end of handle 21
+			
 
 void readSector(char*buffer ,int sector){// start of readSector
 
