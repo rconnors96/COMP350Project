@@ -3,7 +3,7 @@
 	void readString(char*); 	//readString function declaration
 	void readSector(char*); 		// read sector
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
-	void readFile(char*,char*,int);
+	void readFile(char*,char*,int*);
 
 void main() {
 
@@ -16,6 +16,30 @@ void main() {
 	else
 		interrupt(0x21, 0, "messag not found\r\n", 0, 0);  /*no sectors read? then print an error*/
 	while(1);   /*hang up*/ 
+
+void readFile(char* name, char* buffer, int* sectorsRead){
+	int i = 0;
+	int j = 6;
+	int *sectorRead;
+	char dir[512];
+	*sectorsRead = 0;
+	interrupt(0x21,2,dir,2,0);
+	for(i = 0; i <512; i=i+32){
+	//printChar(dir[i]);
+	//printChar(dir[i+1]);
+	//printChar(dir[i+2]);
+	//printChar(dir[i+3]);
+	//printChar(dir[i+4]);
+	//printChar(dir[i+5]);
+		if(name[0] == dir[i+0]&&name[1] == dir[i+1] &&name[2] == dir[i+2] &&name[3] == dir[i+3] &&name[4] == dir[i+4] &&name[5] == dir[i+5]){
+			*sectorsRead = 1;
+			for(j =i+ 6; dir[j]!=0; j+=32){
+				interrupt(0x21,2,buffer,dir[j],0);
+ 				*buffer = *buffer + 512;
+			}
+		}
+	
+	}
 }
 
 void printChar(char c) {
@@ -59,6 +83,8 @@ void readString(char* chars) {
 	}
 }
 
+
+
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
 	if(ax > 3){//error check
@@ -79,9 +105,12 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	if(ax == 3){
 		readFile(bx,cx,dx);
 	}// end of sector
-
+	if(ax == 3){
+		readFile(bx,cx,dx);
+	}
 
 }//end of handle 21
+			
 
 void readSector(char* buffer ,int sector){// start of readSector
 
@@ -103,22 +132,3 @@ void readSector(char* buffer ,int sector){// start of readSector
 	interrupt(0x13, AX, BX, CX, DX);
 
 } // end of readSector
-
-void readFile(char* fileName, char* buffer, int sectorsRead) {
-	char dir[512];
-	readSector(dir,512);
-
-	int numberOfLoops = 1; //for testing the for loop
-
-	for(int fileEntry; fileEntry < 512 ; fileEntry+=32) {
-		sectorsRead++;
-		if(fileName[0]==dir[fileEntry+0] && fileName[1]==dir[fileEntry+1] && fileName[2]==dir[fileEntry+2] && fileName[3]==dir[fileEntry+3] && fileName[4]==dir[fileEntry+4] && fileName[5]==dir[fileEntry+5]) {
-			for(int i = 6; i < 32; i++) {
-				readSector(buffer, dir[fileEntry+i]);
-				buffer += 512;
-			}
-		}
-		numberOfLoops++; //testing the for loop
-		printChar(numberOfLoops); //testing the for loop
-	}
-}
