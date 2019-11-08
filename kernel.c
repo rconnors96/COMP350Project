@@ -4,18 +4,24 @@
 	void readSector(char*); 		// read sector
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
 	void readFile(char*,char*,int*);
+	void executeProgram(char*);
 
 void main() {
 
 	char buffer[13312];   /*this is the maximum size of a file*/
 	int sectorsRead;
-	makeInterrupt21(); 
+	makeInterrupt21();
 	interrupt(0x21, 3, "messag", buffer, &sectorsRead);   /*read the file into buffer*/ 
 	if (sectorsRead>0)
-		interrupt(0x21, 0, buffer, 0, 0);   /*print out the file*/ 
+		interrupt(0x21, 0, buffer, 0, 0);   /*print out the file*/
 	else
 		interrupt(0x21, 0, "messag not found\r\n", 0, 0);  /*no sectors read? then print an error*/
-	while(1);   /*hang up*/ 
+	while(1);   /*hang up*/
+}
+
+void executeProgram(char* name) {
+
+}
 
 void readFile(char* name, char* buffer, int* sectorsRead){
 	int i = 0;
@@ -38,7 +44,7 @@ void readFile(char* name, char* buffer, int* sectorsRead){
  				*buffer = *buffer + 512;
 			}
 		}
-	
+
 	}
 }
 
@@ -110,7 +116,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	}
 
 }//end of handle 21
-			
+
 
 void readSector(char* buffer ,int sector){// start of readSector
 
