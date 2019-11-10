@@ -96,4 +96,3 @@ _launchProgram:
 	mov bp,#0xfff0
 
 jump:	jmp #0x0000:0x0000	;and start running (the first 0000 is changed above)
-
