@@ -1,7 +1,7 @@
 	void printChar(char); 		//printChar function declaration
 	void printString(char*); 	//printString function declaration
 	void readString(char*); 	//readString function declaration
-	void readSector(char*); 		// read sector
+	void readSector(char); 		// read sector
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
 	void readFile(char*,char*,int*);
 	void executeProgram(char*);
@@ -10,19 +10,20 @@ void main() {
 
 	makeInterrupt21();
 	interrupt(0x21, 4, "tstpr1", 0, 0);
-	while(1); 
+	while(1);
 }
 
 void executeProgram(char* name) {
-	char buffer[13312];
-	int sectorsRead;
 	int i;
+	int sectorsRead;
+	char buffer[13312];
 
-	interrupt(0x21, 3, name, buffer, &sectorsRead);
+	readFile(name, buffer, &sectorsRead);
 
-	for(i = 0; i < 13312l; i++) {
-		putInMemory(0x2000, i, buffer[i]);
+	for(i=0; i<13312; i++) {
+		putInMemory(0x2000,i,buffer[i]);
 	}
+
 	launchProgram(0x2000);
 }
 
@@ -40,14 +41,19 @@ void readFile(char* name, char* buffer, int* sectorsRead){
 	//printChar(dir[i+3]);
 	//printChar(dir[i+4]);
 	//printChar(dir[i+5]);
-		if(name[0] == dir[i+0]&&name[1] == dir[i+1] &&name[2] == dir[i+2] &&name[3] == dir[i+3] &&name[4] == dir[i+4] &&name[5] == dir[i+5]){
+		if(name[0] == dir[i+0]&&
+			name[1] == dir[i+1] &&
+			name[2] == dir[i+2] &&
+			name[3] == dir[i+3] &&
+			name[4] == dir[i+4] &&
+			name[5] == dir[i+5]){
 			*sectorsRead = 1;
 			for(j =i+ 6; dir[j]!=0; j+=32){
 				interrupt(0x21,2,buffer,dir[j],0);
  				*buffer = *buffer + 512;
 			}
 		}
-
+	
 	}
 }
 
@@ -110,21 +116,18 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
 	if(ax == 2){// read sector
 		readSector(bx, cx);
-	}
-	if(ax == 3){
-		readFile(bx,cx,dx);
 	}// end of sector
 	if(ax == 3){
 		readFile(bx,cx,dx);
 	}
-	if(ax == 4) {
+	if(ax == 4){
 		executeProgram(bx);
 	}
 
 }//end of handle 21
 
 
-void readSector(char* buffer ,int sector){// start of readSector
+void readSector(char*buffer ,int sector){// start of readSector
 
 	// parameter set up
 	int AH = 2;
@@ -134,7 +137,7 @@ void readSector(char* buffer ,int sector){// start of readSector
 	int CL = sector+1;
 	int DH = 0;
 	int DL = 0x80;
-
+	
 	// more parameter set up (simple input)
 	int AX = AH*256+AL;
 	int CX = CH*256+CL;
