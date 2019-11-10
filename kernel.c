@@ -10,12 +10,20 @@
 void main() {
 
 	makeInterrupt21();
-	interrupt(0x21, 4, "tstpr2", 0, 0);
+	interrupt(0x21, 4, "shell", 0, 0);
 	while(1);
 }
 
 void terminate(){
-	while(1);
+	char shellname[6];
+	shellname[0]='s';
+	shellname[1]='h';
+	shellname[2]='e';
+	shellname[3]='l';
+	shellname[4]='l';
+	shellname[5]='\0';
+
+	executeProgram(shellname);
 }
 
 void executeProgram(char* name) {
