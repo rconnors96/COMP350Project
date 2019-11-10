@@ -7,7 +7,7 @@ ld86 -o kernel -d kernel_c.o kernel_asm.o
 ./loadFile kernel
 ./loadFile message.txt
 
-bcc -ansi -c -o tstpr1.o tstpr1.c
+bcc -ansi -c -o tstpr2.o tstpr2.c
 as86 -o userlib.o userlib.asm
-ld86 -d -o tstpr1 tstpr1.o userlib.o
-./loadFile tstpr1
+ld86 -d -o tstpr2 tstpr2.o userlib.o
+./loadFile tstpr2

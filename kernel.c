@@ -5,11 +5,16 @@
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
 	void readFile(char*,char*,int*);
 	void executeProgram(char*);
+	void terminate();
 
 void main() {
 
 	makeInterrupt21();
-	interrupt(0x21, 4, "tstpr1", 0, 0);
+	interrupt(0x21, 4, "tstpr2", 0, 0);
+	while(1);
+}
+
+void terminate(){
 	while(1);
 }
 
@@ -102,7 +107,7 @@ void readString(char* chars) {
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 4){//error check
+	if(ax > 5){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
@@ -122,6 +127,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	}
 	if(ax == 4){
 		executeProgram(bx);
+	}
+	if(ax==5){
+		terminate();
 	}
 
 }//end of handle 21
