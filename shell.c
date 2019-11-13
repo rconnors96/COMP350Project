@@ -1,10 +1,11 @@
 void main(){
 
-	while(1){
+	
 
 	char line[80];
 	char command[10];
 	char buffer[13312];
+	int sectorsRead;
 	int i = 5;
 	int j = 0;
 
@@ -18,10 +19,21 @@ void main(){
 				i++;
 				j++;
 			}
+		
+			syscall(3, command, buffer, &sectorsRead);
+			
+			if(sectorsRead > 0){
+				syscall(1, &buffer);
+				syscall(0, buffer);
+			}
+			
+		else{
+			syscall(0, "File not found\r\n");
+		}
+
 		}
 		else{
-		syscall(0,"Bad Command");
+			syscall(0,"Bad Command\r\n");
 		}
-		syscall(4, command);
+		
 	}
-}
