@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 			{
 				char c = fgetc(loadFil);
 				fputc(c, floppy);
-			}
+			}	
 		}
 	}
 
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
         fseek(floppy,512,SEEK_SET);
         for(i=0; i<512; i++)
 		fputc(map[i],floppy);
-
+        
         fseek(floppy,512*2,SEEK_SET);
         for (i=0; i<512; i++)
 		fputc(dir[i],floppy);
@@ -129,4 +129,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
