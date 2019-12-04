@@ -11,10 +11,6 @@ main(){
 	int j;
 	int parameterIndex;
 
-	for (j=0; j<80; j++) {
-		line[j] = 0;
-	}
-
 	syscall(0,"SHELL>"); //displays "SHELL>" to the user
 	syscall(1, line); //takes input
 
@@ -43,16 +39,17 @@ main(){
 		} else if(command[0] == 'e' && command[1] == 'x' && command[2] == 'e' && command[3] == 'c'){
 			syscall(4, param);
 			syscall(0, "exe file not found\n\r");
-		} else if(command[0] == 'd' && command[1] == 'i' && command [2] == 'r') {
-			syscall(2, buffer, 2); //reads sector 2 (the directory) into buffer
-			for (i=0; i < 512; i = i+32) {
-				if(buffer[i] != '\0') { //doesnt print deleted files
-					for (j = i; j < (i+6); j++) {
-						syscall(0, buffer[j]);
-					}
-				}
-			}
-		}
+		} else if(command[0] == 'd' && command[1] == 'i' && command[2] == 'r') {
+                        syscall(2, buffer, 2); //reads sector 2 (the directory) into buf$
+                        for (i=0; i < 512; i = i+32) {
+                                if(buffer[i] != '\0') { //doesnt print deleted files
+                                        for (j = i; j < (i+6); j++) {
+                                                syscall(0, buffer[j]);
+                                        }
+                                }
+                        }
+                }
+
 	}
 	else{
 		syscall(0, "Bad Command\n\r");
