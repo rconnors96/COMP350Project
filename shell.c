@@ -1,26 +1,42 @@
-void main() {
+main(){
+
+	
 
 	char line[80];
 	char command[10];
-	char parameter[70];
-	int i;
-	int paramStart;
+	char buffer[13312];
+	int sectorsRead;
+	int i = 5;
+	int j = 0;
 
-        while(1){
-		syscall(0,"SHELL>"); //displays "SHELL>" to the user
-		syscall(1, line); //takes input
-		i=0;
-		while(line[i] != ' ') { //checks the first word in input (launch, open, print, etc)
-			command[i] = line[i];
-			i++;
-			paramStart = i+1; //this shows where to start in line when checking what user wants to print/open
+	syscall(0,"SHELL>"); //displays "SHELL>" to the user
+	syscall(1, line); //takes input
+	
+	
+		if((line[0] == 't' && line[1] == 'y' && line[2] == 'p' && line[3] == 'e') || (line[0] == 'e' && line[1] == 'x' && line[2] == 'e' && line[3] == 'c')){
+			while(line[i] != '\0'){
+				command[j] = line[i];
+				i++;
+				j++;
+			}
+			if(line[0] == 't' && line[1] == 'y' && line[2] == 'p' && line[3] == 'e'){
+				syscall(3, command, buffer, &sectorsRead);
+				
+				if(sectorsRead > 0){
+					syscall(0, buffer);
+				}
+				else{
+					syscall(0,"File not found\n\r");
+				}
+			}
+			if(line[0] == 'e' && line[1] == 'x' && line[2] == 'e' && line[3] == 'c'){
+				syscall(4, command);
+					syscall(0, "exe file not found\n\r");
+			}
+			
 		}
-		i=0;
-		while(line[paramStart] != '\0') {
-			parameter[i] = line[paramStart];
-			i++;
-			paramStart++;
+		else{
+			syscall(0, "Bad Command\n\r");
 		}
-		syscall(0,"Bad Command");
 	}
-}
+

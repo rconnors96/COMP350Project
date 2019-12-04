@@ -32,7 +32,7 @@ void executeProgram(char* name) {
 	char buffer[13312];
 
 	readFile(name, buffer, &sectorsRead);
-
+	if(sectorsRead == 0){return;}
 	for(i=0; i<13312; i++) {
 		putInMemory(0x2000,i,buffer[i]);
 	}
@@ -54,16 +54,12 @@ void readFile(char* name, char* buffer, int* sectorsRead){
 	//printChar(dir[i+3]);
 	//printChar(dir[i+4]);
 	//printChar(dir[i+5]);
-		if(name[0] == dir[i+0]&&
-			name[1] == dir[i+1] &&
-			name[2] == dir[i+2] &&
-			name[3] == dir[i+3] &&
-			name[4] == dir[i+4] &&
-			name[5] == dir[i+5]){
+	//printChar('h');
+		if(name[0] == dir[i+0]&&name[1] == dir[i+1] &&name[2] == dir[i+2] &&name[3] == dir[i+3] &&name[4] == dir[i+4] &&name[5] == dir[i+5]){
 			*sectorsRead = 1;
 			for(j =i+ 6; dir[j]!=0; j+=32){
 				interrupt(0x21,2,buffer,dir[j],0);
- 				*buffer = *buffer + 512;
+ 				buffer = buffer + 512;
 			}
 		}
 	
@@ -133,6 +129,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	if(ax == 3){
 		readFile(bx,cx,dx);
 	}
+
 	if(ax == 4){
 		executeProgram(bx);
 	}
@@ -141,7 +138,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	}
 
 }//end of handle 21
-
+			
 
 void readSector(char*buffer ,int sector){// start of readSector
 
