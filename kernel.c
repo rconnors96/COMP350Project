@@ -6,12 +6,33 @@
 	void readFile(char*,char*,int*);
 	void executeProgram(char*);
 	void terminate();
+	void writeSector(char*, int);
 
 void main() {
 
 	makeInterrupt21();
 	interrupt(0x21, 4, "shell", 0, 0);
 	while(1);
+}
+
+void writeSector(char* buffer, int sector) {
+	// parameter set up
+        int AH = 3;
+        int AL = 1;
+        int BX = buffer;
+        int CH = 0;
+        int CL = sector+1;
+        int DH = 0;
+        int DL = 0x80;
+
+        // more parameter set up (simple input)
+        int AX = AH*256+AL;
+        int CX = CH*256+CL;
+        int DX = DH*256+DL;
+
+        // actual interrupt taking in simple input
+        interrupt(0x13, AX, BX, CX, DX);
+
 }
 
 void terminate(){
@@ -107,11 +128,33 @@ void readString(char* chars) {
 	}
 }
 
+void readSector(char*buffer ,int sector){// start of readSector
+
+        // parameter set up
+        int AH = 2;
+        int AL = 1;
+        int BX = buffer;
+        int CH = 0;
+        int CL = sector+1;
+        int DH = 0;
+        int DL = 0x80;
+
+        // more parameter set up (simple input)
+        int AX = AH*256+AL;
+        int CX = CH*256+CL;
+        int DX = DH*256+DL;
+
+        // actual interrupt taking in simple input
+        interrupt(0x13, AX, BX, CX, DX);
+
+} // end of readSector
+
+
 
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 5){//error check
+	if(ax > 6){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
@@ -136,27 +179,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	if(ax==5){
 		terminate();
 	}
+	if(ax==6){
+		writeSector(bx, cx);
+	}
 
 }//end of handle 21
-			
 
-void readSector(char*buffer ,int sector){// start of readSector
-
-	// parameter set up
-	int AH = 2;
-	int AL = 1;
-	int BX = buffer;
-	int CH = 0;
-	int CL = sector+1;
-	int DH = 0;
-	int DL = 0x80;
-	
-	// more parameter set up (simple input)
-	int AX = AH*256+AL;
-	int CX = CH*256+CL;
-	int DX = DH*256+DL;
-
-	// actual interrupt taking in simple input
-	interrupt(0x13, AX, BX, CX, DX);
-
-} // end of readSector
