@@ -1,33 +1,25 @@
+	char line[80];
+        char command[80];
+        char param[80];
+        char buffer[13312];
+        int sectorsRead;
+        int i;
+        int parameterIndex;
+        char shell[7];
+
+
 main(){
 
-	char line[80];
-	char command[80];
-	char param[80];
-	char buffer[13312];
-	char filename[80];
-	int sectorsRead;
-	int i;
-	int j;
-	int parameterIndex;
+	shell[0] = 'S';
+	shell[1] = 'H';
+	shell[2] = 'E';
+	shell[3] = 'L';
+	shell[4] = 'L';
+	shell[5] = '>';
+	shell[6] = '\0';
 
 
-/* DIR CODE
-	char dir[512];
-                syscall(2, dir, 2);
-
-                for (i = 0; i < 512; i=i+32) {
-                        for(j = 0; j < 6; ++j) {
-                                filename[j] = dir[i+j];
-                        }
-                        syscall(0, filename);
-                }
-*/
-
-
-
-
-
-	syscall(0,"SHELL>"); //displays "SHELL>" to the user
+	syscall(0, shell); //displays "SHELL>" to the user
 	syscall(1, line); //takes input
 
 	i = 0;
@@ -44,9 +36,7 @@ main(){
 		parameterIndex++;
 	}
 
-	if (command[0] == 'd' && command[1] == 'i' && command[2] == 'r'){
-		
-	} else if (command[0] == 't' && command[1] == 'y' && command[2] == 'p' && command[3] == 'e'){
+	if (command[0] == 't' && command[1] == 'y' && command[2] == 'p' && command[3] == 'e'){
 		syscall(3, param, buffer, &sectorsRead);
 		if (sectorsRead > 0){
 			syscall(0, buffer);
