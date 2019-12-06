@@ -1,19 +1,20 @@
+	char line[80];
+        char command[80];
+        char param[80];
+        char buffer[13312];
+        int sectorsRead;
+        int i;
+        int parameterIndex;
+        char shell[7];
+
+
 main(){
 
-	char line[80];
-	char command[80];
-	char param[80];
-	char buffer[13312];
-	int sectorsRead;
-	int i;
-	int parameterIndex;
-	char shell[7];
-
-	shell[0] = 's';
-	shell[1] = 'h';
-	shell[2] = 'e';
-	shell[3] = 'l';
-	shell[4] = 'l';
+	shell[0] = 'S';
+	shell[1] = 'H';
+	shell[2] = 'E';
+	shell[3] = 'L';
+	shell[4] = 'L';
 	shell[5] = '>';
 	shell[6] = '\0';
 

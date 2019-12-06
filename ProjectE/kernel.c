@@ -9,7 +9,21 @@
 	void writeSector(char*, int);
 	void handleTimerInterrupt(int, int);
 
+	int processActive[8];
+	int processStackPointer[8];
+	int currentProcess;
+	int i;
+
 void main() {
+
+	for(i = 0; i < 8; i++) {
+		processActive[i] = 0;
+	}
+	for(i = 0; i < 8; i++) {
+                processStackPointer[i] = 0xff00;
+        }
+	currentProcess = -1;
+
 
 	makeInterrupt21();
 	makeTimerInterrupt();
@@ -20,9 +34,10 @@ void main() {
 }
 
 void handleTimerInterrupt(int segment, int sp) {
-	printChar('T');
-	printChar('i');
-	printChar('c');
+//	printChar('T');
+//	printChar('i');
+//	printChar('c');
+
 	returnFromTimer(segment, sp);
 }
 
