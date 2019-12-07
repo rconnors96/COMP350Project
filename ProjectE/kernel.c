@@ -12,10 +12,12 @@
 	int processActive[8];
 	int processStackPointer[8];
 	int currentProcess;
-	int i;
+	int dataSeg;
+
 
 void main() {
 
+	int i;
 	for(i = 0; i < 8; i++) {
 		processActive[i] = 0;
 	}
@@ -74,17 +76,35 @@ void terminate(){
 }
 
 void executeProgram(char* name) {
-	int i;
+	int i, entry;
 	int sectorsRead;
 	char buffer[13312];
 
 	readFile(name, buffer, &sectorsRead);
-	if(sectorsRead == 0){return;}
-	for(i=0; i<13312; i++) {
-		putInMemory(0x2000,i,buffer[i]);
+	if (sectorsRead == 0) {return;}
+
+	dataSeg = setKernelDataSegment();
+	for(i = 0; i < 8; i++) {
+		if(processActive[i] = 0) {
+			break;
+		}
+		if(i==7) {
+			i=0;
+		}
+	}
+	restoreDataSegment(dataSeg);
+	entry = i;
+
+	for(i = 0; i<13312; i++) {
+		putInMemory(((entry+2)*0x1000), i, buffer[i]);
 	}
 
-	launchProgram(0x2000);
+	initializeProgram((entry+2)*0x1000);
+
+	dataSeg = setKernelDataSegment();
+	processActive[entry] = 1;
+	processStackPointer[entry] = 0xff00;
+	restoreDataSegment(dataSeg);
 }
 
 void readFile(char* name, char* buffer, int* sectorsRead){
@@ -109,7 +129,7 @@ void readFile(char* name, char* buffer, int* sectorsRead){
  				buffer = buffer + 512;
 			}
 		}
-	
+
 	}
 }
 
