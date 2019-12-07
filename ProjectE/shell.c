@@ -9,6 +9,7 @@
 
 
 main(){
+	enableInterrupts();
 
 	shell[0] = 'S';
 	shell[1] = 'H';

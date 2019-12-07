@@ -28,17 +28,32 @@ void main() {
 
 
 	makeInterrupt21();
-	makeTimerInterrupt();
 	interrupt(0x21, 4, "shell", 0, 0);
+	makeTimerInterrupt();
 
 	while(1);
 
 }
 
 void handleTimerInterrupt(int segment, int sp) {
-//	printChar('T');
-//	printChar('i');
-//	printChar('c');
+	int i;
+
+	dataSeg = setKernelDataSegment();
+	if (currentProcess != -1) {
+		processStackPointer[currentProcess] = sp;
+	}
+	for(i = 0; i < 8; i++) {
+		currentProcess++;
+		if(processActive[currentProcess] = 1) {
+			break;
+		}
+		if(currentProcess == 8) {
+			currentProcess = 0;
+		}
+	}
+	segment = (currentProcess+2)*0x1000;
+	sp = processStackPointer[currentProcess]
+	restoreDataSegment(dataSeg);
 
 	returnFromTimer(segment, sp);
 }
@@ -64,15 +79,10 @@ void writeSector(char* buffer, int sector) {
 }
 
 void terminate(){
-	char shellname[6];
-	shellname[0]='s';
-	shellname[1]='h';
-	shellname[2]='e';
-	shellname[3]='l';
-	shellname[4]='l';
-	shellname[5]='\0';
+	dataSeg = setKernelDataSegment();
+	processActive[currentProcess] = 0;
 
-	executeProgram(shellname);
+	while(1);
 }
 
 void executeProgram(char* name) {
@@ -92,8 +102,9 @@ void executeProgram(char* name) {
 			i=0;
 		}
 	}
-	restoreDataSegment(dataSeg);
 	entry = i;
+	currentProcess = entry;
+	restoreDataSegment(dataSeg);
 
 	for(i = 0; i<13312; i++) {
 		putInMemory(((entry+2)*0x1000), i, buffer[i]);
@@ -104,6 +115,7 @@ void executeProgram(char* name) {
 	dataSeg = setKernelDataSegment();
 	processActive[entry] = 1;
 	processStackPointer[entry] = 0xff00;
+	currentProcess = entry;
 	restoreDataSegment(dataSeg);
 }
 
