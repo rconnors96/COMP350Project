@@ -1,3 +1,5 @@
+enableInterrupts();
+
 	char line[80];
         char command[80];
         char param[80];
@@ -9,7 +11,7 @@
 
 
 main(){
-	enableInterrupts();
+
 
 	shell[0] = 'S';
 	shell[1] = 'H';

@@ -39,6 +39,14 @@ void handleTimerInterrupt(int segment, int sp) {
 	int i;
 
 	dataSeg = setKernelDataSegment();
+	for(i=0; i<8; i++)
+        {
+                putInMemory(0xb800,60*2+i*4,i+0x30);
+                if(processActive[i]==1)
+                        putInMemory(0xb800,60*2+i*4+1,0x20);
+                else
+                        putInMemory(0xb800,60*2+i*4+1,0);
+        }
 	if (currentProcess != -1) {
 		processStackPointer[currentProcess] = sp;
 	}
@@ -52,7 +60,7 @@ void handleTimerInterrupt(int segment, int sp) {
 		}
 	}
 	segment = (currentProcess+2)*0x1000;
-	sp = processStackPointer[currentProcess]
+	sp = processStackPointer[currentProcess];
 	restoreDataSegment(dataSeg);
 
 	returnFromTimer(segment, sp);
