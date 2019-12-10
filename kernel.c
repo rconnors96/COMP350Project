@@ -1,11 +1,12 @@
 	void printChar(char); 		//printChar function declaration
 	void printString(char*); 	//printString function declaration
 	void readString(char*); 	//readString function declaration
-	void readSector(char); 		// read sector
+	void readSector(char*, int); 		// read sector
 	void handleInterrupt21(int, int, int, int); //handle's interrupt 21
 	void readFile(char*,char*,int*);
 	void executeProgram(char*);
 	void terminate();
+	void writeSector(char*, int);
 
 void main() {
 
@@ -57,7 +58,7 @@ void readFile(char* name, char* buffer, int* sectorsRead){
 	//printChar('h');
 		if(name[0] == dir[i+0]&&name[1] == dir[i+1] &&name[2] == dir[i+2] &&name[3] == dir[i+3] &&name[4] == dir[i+4] &&name[5] == dir[i+5]){
 			*sectorsRead = 1;
-			for(j =i+ 6; dir[j]!=0; j+=32){
+			for(j =i+ 6; dir[j]!=0; j+=1){
 				interrupt(0x21,2,buffer,dir[j],0);
  				buffer = buffer + 512;
 			}
@@ -111,7 +112,7 @@ void readString(char* chars) {
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 5){//error check
+	if(ax > 6){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
@@ -137,6 +138,10 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 		terminate();
 	}
 
+	if(ax == 6){
+		writeSector(bx,cx);
+	}
+
 }//end of handle 21
 			
 
@@ -144,6 +149,27 @@ void readSector(char*buffer ,int sector){// start of readSector
 
 	// parameter set up
 	int AH = 2;
+	int AL = 1;
+	int BX = buffer;
+	int CH = 0;
+	int CL = sector+1;
+	int DH = 0;
+	int DL = 0x80;
+	
+	// more parameter set up (simple input)
+	int AX = AH*256+AL;
+	int CX = CH*256+CL;
+	int DX = DH*256+DL;
+
+	// actual interrupt taking in simple input
+	interrupt(0x13, AX, BX, CX, DX);
+
+} // end of readSector
+
+void writeSector(char*buffer ,int sector){// start of readSector
+
+	// parameter set up
+	int AH = 3;
 	int AL = 1;
 	int BX = buffer;
 	int CH = 0;
