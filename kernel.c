@@ -6,38 +6,126 @@
 	void readFile(char*,char*,int*);
 	void executeProgram(char*);
 	void terminate();
+	void writeSector(char*, int);
+	void handleTimerInterrupt(int, int);
+	void restoreDataSegment(int);
+
+	int setKernelDataSegment();
+	int processActive[8];
+	int processStackPointer[8];
+	int currentProcess;
+	int dataSeg;
+
 
 void main() {
 
+	int i;
+
+	for(i = 0; i < 8; i++) {
+		processActive[i] = 0;
+	}
+	for(i = 0; i < 8; i++) {
+                processStackPointer[i] = 0xff00;
+        }
+	currentProcess = -1;
+
+
 	makeInterrupt21();
 	interrupt(0x21, 4, "shell", 0, 0);
+	makeTimerInterrupt();
+
 	while(1);
+
+}
+
+void handleTimerInterrupt(int segment, int sp) {
+	int i=0;
+
+	dataSeg = setKernelDataSegment();
+	for(i=0; i<8; i++)
+        {
+                putInMemory(0xb800,60*2+i*4,i+0x30);
+                if(processActive[i]==1)
+                        putInMemory(0xb800,60*2+i*4+1,0x20);
+                else
+                        putInMemory(0xb800,60*2+i*4+1,0);
+        }
+	if (currentProcess != -1) {
+		processStackPointer[currentProcess] = sp;
+	}
+	for(i = 0; i < 8; i++) {
+		currentProcess++;
+		if(currentProcess == 8) {
+			currentProcess = 0;
+		}
+		if(processActive[currentProcess] == 1) {
+			break;
+		}
+	}
+	segment = (currentProcess+2)*0x1000;
+	sp = processStackPointer[currentProcess];
+	restoreDataSegment(dataSeg);
+
+	returnFromTimer(segment, sp);
+}
+
+void writeSector(char* buffer, int sector) {
+	// parameter set up
+        int AH = 3;
+        int AL = 1;
+        int BX = buffer;
+        int CH = 0;
+        int CL = sector+1;
+        int DH = 0;
+        int DL = 0x80;
+
+        // more parameter set up (simple input)
+        int AX = AH*256+AL;
+        int CX = CH*256+CL;
+        int DX = DH*256+DL;
+
+        // actual interrupt taking in simple input
+        interrupt(0x13, AX, BX, CX, DX);
+
 }
 
 void terminate(){
-	char shellname[6];
-	shellname[0]='s';
-	shellname[1]='h';
-	shellname[2]='e';
-	shellname[3]='l';
-	shellname[4]='l';
-	shellname[5]='\0';
-
-	executeProgram(shellname);
+	dataSeg = setKernelDataSegment();
+	processActive[currentProcess] = 0;
+	restoreDataSegment(dataSeg);
+	while(1);
 }
 
 void executeProgram(char* name) {
-	int i;
+	int i, entry;
 	int sectorsRead;
 	char buffer[13312];
 
 	readFile(name, buffer, &sectorsRead);
-	if(sectorsRead == 0){return;}
-	for(i=0; i<13312; i++) {
-		putInMemory(0x2000,i,buffer[i]);
+	if (sectorsRead == 0) {return;}
+
+	dataSeg = setKernelDataSegment();
+
+	for(i = 0; i < 8; i++) {
+		if(processActive[i] == 0) {
+			break;
+		}
+	}
+	entry = i;
+	restoreDataSegment(dataSeg);
+
+	for(i = 0; i<13312; i++) {
+		putInMemory(((entry+2)*0x1000), i, buffer[i]);
 	}
 
-	launchProgram(0x2000);
+	initializeProgram((entry+2)*0x1000);
+
+	dataSeg = setKernelDataSegment();
+	processActive[entry] = 1;
+//	sp = processStackPointer[entry];
+	processStackPointer[entry] = 0xff00;
+//	currentProcess = entry;
+	restoreDataSegment(dataSeg);
 }
 
 void readFile(char* name, char* buffer, int* sectorsRead){
@@ -62,7 +150,7 @@ void readFile(char* name, char* buffer, int* sectorsRead){
  				buffer = buffer + 512;
 			}
 		}
-	
+
 	}
 }
 
@@ -107,11 +195,33 @@ void readString(char* chars) {
 	}
 }
 
+void readSector(char*buffer ,int sector){// start of readSector
+
+        // parameter set up
+        int AH = 2;
+        int AL = 1;
+        int BX = buffer;
+        int CH = 0;
+        int CL = sector+1;
+        int DH = 0;
+        int DL = 0x80;
+
+        // more parameter set up (simple input)
+        int AX = AH*256+AL;
+        int CX = CH*256+CL;
+        int DX = DH*256+DL;
+
+        // actual interrupt taking in simple input
+        interrupt(0x13, AX, BX, CX, DX);
+
+} // end of readSector
+
+
 
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 5){//error check
+	if(ax > 6){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
@@ -136,27 +246,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	if(ax==5){
 		terminate();
 	}
+	if(ax==6){
+		writeSector(bx, cx);
+	}
 
 }//end of handle 21
-			
 
-void readSector(char*buffer ,int sector){// start of readSector
-
-	// parameter set up
-	int AH = 2;
-	int AL = 1;
-	int BX = buffer;
-	int CH = 0;
-	int CL = sector+1;
-	int DH = 0;
-	int DL = 0x80;
-	
-	// more parameter set up (simple input)
-	int AX = AH*256+AL;
-	int CX = CH*256+CL;
-	int DX = DH*256+DL;
-
-	// actual interrupt taking in simple input
-	interrupt(0x13, AX, BX, CX, DX);
-
-} // end of readSector
