@@ -8,13 +8,19 @@
 	void terminate();
 	void writeSector(char*, int);
 	void handleTimerInterrupt(int, int);
+	void restoreDataSegment(int);
+	void killProcess(int);
 
+	int setKernelDataSegment();
 	int processActive[8];
 	int processStackPointer[8];
 	int currentProcess;
-	int i;
+	int dataSeg;
+
 
 void main() {
+
+	int i;
 
 	for(i = 0; i < 8; i++) {
 		processActive[i] = 0;
@@ -26,17 +32,46 @@ void main() {
 
 
 	makeInterrupt21();
-	makeTimerInterrupt();
 	interrupt(0x21, 4, "shell", 0, 0);
+	makeTimerInterrupt();
 
 	while(1);
 
 }
 
+void killProcess(int processID) {
+	dataSeg = setKernelDataSegment();
+	processActive[processID] = 0;
+	restoreDataSegment(dataSeg);
+}
+
 void handleTimerInterrupt(int segment, int sp) {
-//	printChar('T');
-//	printChar('i');
-//	printChar('c');
+	int i=0;
+
+	dataSeg = setKernelDataSegment();
+	for(i=0; i<8; i++)
+        {
+                putInMemory(0xb800,60*2+i*4,i+0x30);
+                if(processActive[i]==1)
+                        putInMemory(0xb800,60*2+i*4+1,0x20);
+                else
+                        putInMemory(0xb800,60*2+i*4+1,0);
+        }
+	if (currentProcess != -1) {
+		processStackPointer[currentProcess] = sp;
+	}
+	for(i = 0; i < 8; i++) {
+		currentProcess++;
+		if(currentProcess == 8) {
+			currentProcess = 0;
+		}
+		if(processActive[currentProcess] == 1) {
+			break;
+		}
+	}
+	segment = (currentProcess+2)*0x1000;
+	sp = processStackPointer[currentProcess];
+	restoreDataSegment(dataSeg);
 
 	returnFromTimer(segment, sp);
 }
@@ -62,29 +97,42 @@ void writeSector(char* buffer, int sector) {
 }
 
 void terminate(){
-	char shellname[6];
-	shellname[0]='s';
-	shellname[1]='h';
-	shellname[2]='e';
-	shellname[3]='l';
-	shellname[4]='l';
-	shellname[5]='\0';
-
-	executeProgram(shellname);
+	dataSeg = setKernelDataSegment();
+	processActive[currentProcess] = 0;
+	restoreDataSegment(dataSeg);
+	while(1);
 }
 
 void executeProgram(char* name) {
-	int i;
+	int i, entry;
 	int sectorsRead;
 	char buffer[13312];
 
 	readFile(name, buffer, &sectorsRead);
-	if(sectorsRead == 0){return;}
-	for(i=0; i<13312; i++) {
-		putInMemory(0x2000,i,buffer[i]);
+	if (sectorsRead == 0) {return;}
+
+	dataSeg = setKernelDataSegment();
+
+	for(i = 0; i < 8; i++) {
+		if(processActive[i] == 0) {
+			break;
+		}
+	}
+	entry = i;
+	restoreDataSegment(dataSeg);
+
+	for(i = 0; i<13312; i++) {
+		putInMemory(((entry+2)*0x1000), i, buffer[i]);
 	}
 
-	launchProgram(0x2000);
+	initializeProgram((entry+2)*0x1000);
+
+	dataSeg = setKernelDataSegment();
+	processActive[entry] = 1;
+//	sp = processStackPointer[entry];
+	processStackPointer[entry] = 0xff00;
+//	currentProcess = entry;
+	restoreDataSegment(dataSeg);
 }
 
 void readFile(char* name, char* buffer, int* sectorsRead){
@@ -103,13 +151,13 @@ void readFile(char* name, char* buffer, int* sectorsRead){
 	//printChar(dir[i+5]);
 	//printChar('h');
 		if(name[0] == dir[i+0]&&name[1] == dir[i+1] &&name[2] == dir[i+2] &&name[3] == dir[i+3] &&name[4] == dir[i+4] &&name[5] == dir[i+5]){
-			*sectorsRead = 1;
-			for(j =i+ 6; dir[j]!=0; j+=32){
+			for(j =i+ 6; dir[j]!=0; j+=1){
+				*sectorsRead = *sectorsRead + 1;
 				interrupt(0x21,2,buffer,dir[j],0);
  				buffer = buffer + 512;
 			}
 		}
-	
+
 	}
 }
 
@@ -135,13 +183,16 @@ void readString(char* chars) {
 			if (current == 0x8) { //checks if char is "Backspace"
 				if (i > 0) { //decreases i index if it is greater than 0
 					i--; //this ensures index doesnt go negative
+					printChar(current);
+					printChar(' ');
+					printChar(current);
 				}
-			printChar(current);
-			printChar(' ');
+			
+			} else {
+				chars[i] = current; //stores the char in an array
+				printChar(current); //prints the typed character
+				i++; //increases char array index
 			}
-			chars[i] = current; //stores the char in an array
-			printChar(current); //prints the typed character
-			i++; //increases char array index
 		}
 		else {
 			chars[i] = 0x0; //adds line feed char to array
@@ -180,7 +231,7 @@ void readSector(char*buffer ,int sector){// start of readSector
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 
-	if(ax > 6){//error check
+	if(ax > 9){//error check
 		interrupt(0x21,0,"Eror Interupt Nt Dfined",0,0);
 	}//end of check
 
@@ -207,6 +258,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {//start of handle 21
 	}
 	if(ax==6){
 		writeSector(bx, cx);
+	}
+	if(ax==9){
+		killProcess(bx);
 	}
 
 }//end of handle 21

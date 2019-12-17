@@ -1,14 +1,18 @@
+enableInterrupts();
+
+main(){
+
 	char line[80];
         char command[80];
         char param[80];
         char buffer[13312];
+	char dir[512];
+	char filename[80];
         int sectorsRead;
         int i;
+	int j=0;
         int parameterIndex;
         char shell[7];
-
-
-main(){
 
 	shell[0] = 'S';
 	shell[1] = 'H';
@@ -45,7 +49,20 @@ main(){
 		}
 	} else if (command[0] == 'e' && command[1] == 'x' && command[2] == 'e' && command[3] == 'c'){
 		syscall(4, param);
-		syscall(0, "exe file not found\n\r");
+
+	} else if(line[0] == 'd' && line[1] == 'i'&& line[2] == 'r'){//dir command
+		syscall(2, dir, 2);
+		for(i = 0; i < 512; i=i+32){
+			if(dir[i]!= '\0'){
+				for(j= 0; j < 6; ++j){
+					filename[j] = dir[i+j];
+				}
+				syscall(0, filename);
+				syscall(0, "\n\r");
+			}
+		}
+	} else if(line[0] == 'k' && line[1] == 'i'&& line[2] == 'l' && line[3] == 'l'){//dir command
+		syscall(9, param[0]-'0');
 	} else {
 		syscall(0, "Bad Command\n\r");
 	}
